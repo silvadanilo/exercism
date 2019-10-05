@@ -1,0 +1,6 @@
+[package]
+name = "first_index_in_a_sorted_array_with_duplicates"
+version = "0.1.0"
+authors = ["SAMPLE <SAMPLE>"]
+
+[dependencies]
