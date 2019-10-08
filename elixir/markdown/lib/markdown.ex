@@ -16,9 +16,8 @@ defmodule Markdown do
   def parse(markdown_text) do
     markdown_text
     |> String.split("\n")
-    |> Enum.map(fn line -> process(line) end)
-    |> Enum.join()
-    |> patch()
+    |> Enum.map_join(&process/1)
+    |> wrap_li_in_ul()
   end
 
   # Removed if in favor of pattern matching on first char of a line
@@ -66,8 +65,7 @@ defmodule Markdown do
 
   defp join_words_with_tags(words) do
     words
-    |> Enum.map(fn w -> replace_md_with_tag(w) end)
-    |> Enum.join(" ")
+    |> Enum.map_join(" ", fn w -> replace_md_with_tag(w) end)
   end
 
   # Used pipe
@@ -93,7 +91,7 @@ defmodule Markdown do
     end
   end
 
-  defp patch(html_lists) do
+  defp wrap_li_in_ul(html_lists) do
     html_lists
     |> String.replace("<li>", "<ul><li>", global: false)
     |> String.replace_suffix("</li>", "</li></ul>")
