@@ -5,28 +5,33 @@ defmodule OcrNumbers do
   """
   @spec convert([String.t()]) :: String.t()
   def convert(input) do
-    case check_lenght(input) do
-      {:ok} ->
+    with :ok <- check_matrix_width(input),
+         :ok <- check_matrix_height(input)
+    do
         input
         |> split_by_rows()
         |> Enum.map(&parse_row/1)
         |> Enum.join(",")
         |> (&({:ok, &1})).()
-      error -> error
     end
   end
 
   defp split_by_rows(input), do: input |> Enum.chunk_every(4)
 
-  defp check_lenght(input) do
+  defp check_matrix_height(input) do
     if rem(length(input), 4) !== 0 do
       {:error, 'invalid line count'}
     else
-      if rem(String.length(Enum.at(input, 0)), 3) !== 0 do
-        {:error, 'invalid column count'}
-      else
-        {:ok}
-      end
+      :ok
+    end
+  end
+
+  defp check_matrix_width(input) do
+    input
+    |> Enum.all?(fn line -> rem(String.length(line), 3) === 0 end)
+    |> case do
+      true -> :ok
+      false -> {:error, 'invalid column count'}
     end
   end
 
