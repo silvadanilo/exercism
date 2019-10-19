@@ -1,2 +1,7 @@
 _build/*
 .exercism
+mix.exs
+hints.md
+test_helper.exs
+.formatter.exs
+*.gitignore
