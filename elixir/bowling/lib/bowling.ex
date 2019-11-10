@@ -1,6 +1,12 @@
 defmodule Bowling do
   @end_game nil
 
+  @pins 10
+  @strike 10
+  @spare 10
+
+  @frames 10
+
   @doc """
     Creates a new game of bowling that can be used to store the results of
     the game
@@ -17,7 +23,7 @@ defmodule Bowling do
   """
   @spec roll(any, integer) :: any | String.t()
   def roll(_game, roll) when roll < 0, do: {:error, "Negative roll is invalid"}
-  def roll(_game, roll) when roll > 10, do: {:error, "Pin count exceeds pins on the lane"}
+  def roll(_game, roll) when roll > @pins, do: {:error, "Pin count exceeds pins on the lane"}
 
   def roll(%{current_frame: nil}, _), do: {:error, "Cannot roll after game is over"}
 
@@ -36,15 +42,15 @@ defmodule Bowling do
   end
 
   defp add_to_frame(roll, {type, _, rolls: [previous_roll]})
-       when type in [:strike_bonus_2, :half] and roll + previous_roll > 10 do
+       when type in [:strike_bonus_2, :half] and roll + previous_roll > @pins do
     {:error, "Pin count exceeds pins on the lane"}
   end
 
-  defp add_to_frame(10, {:open, n, _}) do
-    {:strike, n, rolls: [10]}
+  defp add_to_frame(@strike, {:open, n, _}) do
+    {:strike, n, rolls: [@strike]}
   end
 
-  defp add_to_frame(roll, {:half, n, rolls: [previous_roll]}) when roll + previous_roll == 10 do
+  defp add_to_frame(roll, {:half, n, rolls: [previous_roll]}) when roll + previous_roll == @spare do
     {:spare, n, rolls: [previous_roll, roll]}
   end
 
@@ -69,7 +75,7 @@ defmodule Bowling do
     %{game | frames: [frame | game.frames], current_frame: next_frame(frame)}
   end
 
-  defp add_to_game(frame = {:strike_bonus_1, _, rolls: [10]}, game) do
+  defp add_to_game(frame = {:strike_bonus_1, _, rolls: [@strike]}, game) do
     %{game | frames: [frame | game.frames], current_frame: next_frame(frame)}
   end
 
@@ -77,19 +83,19 @@ defmodule Bowling do
     %{game | current_frame: next_frame(frame)}
   end
 
-  defp next_frame({:closed, 10, _}), do: @end_game
+  defp next_frame({:closed, @frames, _}), do: @end_game
   defp next_frame({:spare_bonus, _, _}), do: @end_game
   defp next_frame({:strike_bonus_2, _, _}), do: @end_game
-  defp next_frame({:strike, 10, _}), do: {:strike_bonus_1, 11, rolls: []}
-  defp next_frame({:strike_bonus_1, _, rolls: [10]}), do: {:strike_bonus_2, 12, rolls: []}
-  defp next_frame({:strike_bonus_1, _, rolls: rolls}), do: {:strike_bonus_2, 11, rolls: rolls}
-  defp next_frame({:spare, 10, _}), do: {:spare_bonus, 11, rolls: []}
+  defp next_frame({:strike, @frames, _}), do: {:strike_bonus_1, @frames + 1, rolls: []}
+  defp next_frame({:strike_bonus_1, _, rolls: [@strike]}), do: {:strike_bonus_2, @frames + 2, rolls: []}
+  defp next_frame({:strike_bonus_1, _, rolls: rolls}), do: {:strike_bonus_2, @frames + 1, rolls: rolls}
+  defp next_frame({:spare, @frames, _}), do: {:spare_bonus, @frames + 1, rolls: []}
   defp next_frame(current_frame = {:half, _, _}), do: current_frame
   defp next_frame({_, n, _}), do: {:open, n + 1, rolls: []}
 
   defp score(score, [], _), do: score
 
-  defp score(score, [{_, n, rolls: rolls} | t], previous) when n > 10 do
+  defp score(score, [{_, n, rolls: rolls} | t], previous) when n > @frames do
     score(score, t, Enum.take(rolls ++ previous, 2))
   end
 
