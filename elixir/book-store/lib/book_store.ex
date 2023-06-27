@@ -2,13 +2,13 @@ defmodule BookStore do
   @typedoc "A book is represented by its number in the 5-book series"
   @type book :: 1 | 2 | 3 | 4 | 5
 
-  @book_cost 800
-  @discounts %{
-    1 => 1,
-    2 => 0.95,
-    3 => 0.90,
-    4 => 0.80,
-    5 => 0.75
+  @book_price 800
+  @bucket_price %{
+    1 => @book_price,
+    2 => @book_price * 2 * 0.95,
+    3 => @book_price * 3 * 0.90,
+    4 => @book_price * 4 * 0.80,
+    5 => @book_price * 5 * 0.75
   }
 
   @doc """
@@ -75,22 +75,23 @@ defmodule BookStore do
       :error
   """
   defp pick(book_counts, n) do
-    {bucket, left} = Enum.split(book_counts, n)
-
-    book_counts
-    |> Enum.filter(&(&1 > 0))
-    |> Enum.count()
-    |> case do
-      x when x >= n -> {:ok, Enum.sort(Enum.map(bucket, &(&1 - 1)) ++ left, :desc)}
-      _ -> :error
+    if Enum.count(book_counts) >= n do
+      {:ok, drop_bucket(book_counts, n)}
+    else
+      :error
     end
   end
 
-  defp bucket_price(bucket) do
-    bucket
-    |> Enum.map(fn different_books ->
-      (different_books * @book_cost * @discounts[different_books]) |> trunc()
-    end)
+  defp drop_bucket(book_counts, n) do
+    book_counts
+    |> Enum.with_index()
+    |> Enum.map(fn {count, index} -> if index < n, do: count - 1, else: count end)
+    |> Enum.reject(& &1 == 0)
+  end
+
+  defp bucket_price(buckets) do
+    buckets
+    |> Enum.map(fn bucket -> @bucket_price[bucket] end)
     |> Enum.sum()
   end
 end
